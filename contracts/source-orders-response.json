@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Source orders response",
+  "type": "object",
+  "required": ["items", "page", "page_size", "total", "has_next"],
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "$ref": "source-order.json"
+      }
+    },
+    "page": { "type": "integer", "minimum": 1 },
+    "page_size": { "type": "integer", "minimum": 1, "maximum": 500 },
+    "total": { "type": "integer", "minimum": 0 },
+    "has_next": { "type": "boolean" }
+  },
+  "additionalProperties": false
+}

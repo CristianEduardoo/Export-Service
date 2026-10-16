@@ -1,0 +1,19 @@
+# Ejemplo de scheduler con Ofelia
+#
+# Este archivo no es una solución de referencia. Muestra una forma de ejecutar
+# un worker dentro de un contenedor ya desplegado.
+
+services:
+  ofelia:
+    image: mcuadros/ofelia:latest
+    depends_on:
+      - worker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  worker:
+    image: ghcr.io/example/export-service:sha-REPLACE_ME
+    labels:
+      ofelia.enabled: "true"
+      ofelia.job-exec.export.schedule: "@every 5m"
+      ofelia.job-exec.export.command: "python -m app.worker"

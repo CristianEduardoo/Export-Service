@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+.env
+.env.*
+!.env.example
+.coverage
+htmlcov/
+.DS_Store
+dist/
+build/
+*.egg-info/
+exports/
+
+# Material interno de evaluación; no publicar con el reto
+grading/
