@@ -1,0 +1,94 @@
+# Configuración única del proyecto: dependencias y herramientas de calidad
+# Instalación en local: pip install -e '.[dev]'
+# Las dependencias directas van fijadas con == para que el venv, la imagen y el
+# CI instalen lo mismo. Las transitivas no se fijan
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "export-service"
+version = "0.1.0"
+description = "Exporta pedidos de la API de origen a CSV y los envía por email, registrando cada ejecución."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    # API HTTP
+    "fastapi==0.152.0",
+    "uvicorn[standard]==0.54.0",
+    # Configuración y contratos
+    "pydantic==2.14.1",
+    "pydantic-settings==2.16.1",
+    # Base de datos
+    "SQLAlchemy==2.0.55",
+    "alembic==1.20.0",
+    "psycopg[binary]==3.3.6",
+    # Cliente HTTP y reintentos
+    "httpx==0.28.1",
+    "tenacity==9.2.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.4.2",
+    "pytest-cov==6.3.0",
+    "ruff==0.17.1",
+    "mypy==1.20.2",
+    "pre-commit==4.7.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+# ---------------------------------------------------------------- ruff
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["alembic/versions", "examples"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle: estilo PEP 8
+    "W",    # pycodestyle: avisos
+    "F",    # pyflakes: imports y variables sin usar
+    "I",    # orden de imports
+    "N",    # nombres (snake_case)
+    "UP",   # sintaxis moderna de Python
+    "ANN",  # anotaciones de tipo obligatorias
+    "B",    # errores frecuentes
+    "SIM",  # simplificaciones
+    "DTZ",  # prohíbe datetimes sin zona horaria
+    "S",    # seguridad (bandit)
+    "PT",   # buenas prácticas de pytest
+    "RUF",  # reglas propias de ruff
+]
+
+[tool.ruff.lint.per-file-ignores]
+# En tests no se anota el retorno, assert es la forma normal de comprobar y las
+# contraseñas escritas son datos de prueba, no secretos.
+"tests/**" = ["ANN201", "S101", "S105", "S106"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+# ---------------------------------------------------------------- mypy
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+exclude = ["alembic/versions", "examples", "starter"]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+# ---------------------------------------------------------------- pytest
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = ["integration: necesita PostgreSQL real (docker compose)"]
+
+[tool.coverage.run]
+source = ["app"]
+branch = true

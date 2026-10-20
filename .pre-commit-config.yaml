@@ -1,0 +1,38 @@
+# Comprobaciones automáticas antes de cada commit
+# Instalación (una vez, con el venv activado, *importante*): pre-commit install
+#
+# Los hooks de ruff y mypy usan las versiones del venv (fijadas en pyproject.toml):
+# Requisito: el venv debe estar activado al hacer commit.
+
+# Excluir el material original (el diff contra el enunciado queda limpio)
+exclude: ^(docs|contracts|examples|starter)/
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+      - id: detect-private-key
+
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff (lint)
+        entry: ruff check --fix
+        language: system
+        types: [python]
+      - id: ruff-format
+        name: ruff (formato)
+        entry: ruff format
+        language: system
+        types: [python]
+      - id: mypy
+        name: mypy (tipos)
+        entry: mypy app
+        language: system
+        types: [python]
+        pass_filenames: false
