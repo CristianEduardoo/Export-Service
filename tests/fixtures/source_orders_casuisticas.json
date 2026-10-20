@@ -1,0 +1,15 @@
+[
+  {"id": "ord-1001", "customer_id": "customer-42", "amount": 129.95, "currency": "EUR", "updated_at": "2026-10-16T07:45:00Z", "description": "Monthly subscription"},
+  {"id": "ord-1002", "customer_id": "customer-43", "amount": 49.5, "currency": "EUR", "updated_at": "2026-10-16T07:50:00Z", "description": "Additional service"},
+  {"id": "ord-1003", "customer_id": "customer-42", "amount": 19.99, "currency": "EUR", "updated_at": "2026-10-16T07:55:00Z", "description": null},
+  {"id": "ord-1002", "customer_id": "customer-43", "amount": 45.0, "currency": "EUR", "updated_at": "2026-10-16T07:40:00Z", "description": "Version antigua (duplicado)"},
+  {"id": "ord-1004", "customer_id": "customer-44", "amount": 10.0, "currency": "EUR", "updated_at": "2026-10-16T08:00:00Z", "description": "Version antigua (duplicado)"},
+  {"id": "ord-1004", "customer_id": "customer-44", "amount": 12.0, "currency": "EUR", "updated_at": "2026-10-16T08:30:00Z", "description": "Version nueva"},
+  {"id": "ord-2001", "amount": 30.0, "currency": "EUR", "updated_at": "2026-10-16T09:00:00Z", "description": "Falta customer_id"},
+  {"id": "ord-2002", "customer_id": "customer-45", "amount": 0, "currency": "EUR", "updated_at": "2026-10-16T09:05:00Z", "description": "Importe cero"},
+  {"id": "ord-2003", "customer_id": "customer-45", "amount": -15.5, "currency": "EUR", "updated_at": "2026-10-16T09:10:00Z", "description": "Importe negativo"},
+  {"id": "ord-2004", "customer_id": "customer-46", "amount": "99.90", "currency": "EUR", "updated_at": "2026-10-16T09:15:00Z", "description": "Importe en texto"},
+  {"id": "ord-2005", "customer_id": "customer-46", "amount": 25.0, "currency": "eur", "updated_at": "2026-10-16T09:20:00Z", "description": "Moneda en minusculas"},
+  {"id": "ord-2006", "customer_id": "customer-47", "amount": 25.0, "currency": "EUR", "updated_at": "2026-10-16T09:25:00Z", "description": "Campo no previsto", "discount": 5},
+  {"id": "", "customer_id": "customer-47", "amount": 25.0, "currency": "EUR", "updated_at": "2026-10-16T09:30:00Z", "description": "Id vacio"}
+]

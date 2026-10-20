@@ -70,10 +70,20 @@ class EscenarioOrigen(StrEnum):
     LENTO = "slow"
 
 
+# Contrato de la API de origen (contracts/source-order*.json).
+MAX_REGISTROS_POR_PAGINA: Final[int] = 500
+PATRON_MONEDA: Final[str] = r"^[A-Z]{3}$"
+
 # Fallos HTTP de la API de origen que se consideran transitorios y se reintentan.
 # El 500 se excluye a propósito: suele indicar un error del servidor que no se
 # arregla repitiendo la misma petición (por ejemplo, la fecha sin zona horaria).
 CODIGOS_HTTP_TRANSITORIOS: Final[frozenset[int]] = frozenset({429, 502, 503, 504})
+
+# Fichero de exportación: export-20261020T080000Z-8e7d2bb2.csv
+PREFIJO_FICHERO: Final[str] = "export"
+EXTENSION_FICHERO: Final[str] = ".csv"
+FORMATO_FECHA_FICHERO: Final[str] = "%Y%m%dT%H%M%SZ"
+CODIFICACION_FICHERO: Final[str] = "utf-8"
 
 # Columnas del fichero de exportación, en el orden de contracts/export-record.example.json.
 COLUMNAS_EXPORTACION: Final[tuple[str, ...]] = (

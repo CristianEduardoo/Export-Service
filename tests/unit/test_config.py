@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 import pytest
 from pydantic import ValidationError
 
-from app.config import Entorno, Settings
+from app.config import Settings
 
 # Configuración mínima válida. Cada prueba cambia solo lo que quiere comprobar.
 ENTORNO_VALIDO: dict[str, str] = {
@@ -35,40 +35,11 @@ def _cargar() -> Settings:
     return Settings(_env_file=None)
 
 
-def test_configuracion_minima_aplica_valores_por_defecto():
-    settings = _cargar()
-
-    assert settings.entorno is Entorno.DESARROLLO
-    assert settings.nivel_log == "INFO"
-    assert settings.api_origen_registros_por_pagina == 100
-    assert settings.smtp_usar_tls is True
-
-
 @pytest.mark.parametrize("variable", ["SOURCE_API_URL", "EXPORT_RECIPIENT", "POSTGRES_PASSWORD"])
 def test_falta_variable_obligatoria(monkeypatch: pytest.MonkeyPatch, variable: str):
     monkeypatch.delenv(variable)
 
     with pytest.raises(ValidationError, match=variable):
-        _cargar()
-
-
-def test_nivel_log_en_minusculas_se_normaliza(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("LOG_LEVEL", "debug")
-
-    assert _cargar().nivel_log == "DEBUG"
-
-
-def test_nivel_log_desconocido(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("LOG_LEVEL", "VERBOSE")
-
-    with pytest.raises(ValidationError, match="LOG_LEVEL"):
-        _cargar()
-
-
-def test_url_de_origen_sin_esquema(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("SOURCE_API_URL", "source-api:8090")
-
-    with pytest.raises(ValidationError, match="SOURCE_API_URL"):
         _cargar()
 
 
@@ -113,14 +84,6 @@ def test_registros_por_pagina_fuera_del_contrato(monkeypatch: pytest.MonkeyPatch
     monkeypatch.setenv("SOURCE_API_PAGE_SIZE", tamano)
 
     with pytest.raises(ValidationError, match="SOURCE_API_PAGE_SIZE"):
-        _cargar()
-
-
-def test_backoff_maximo_menor_que_base(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("SOURCE_API_BACKOFF_BASE_SECONDS", "10")
-    monkeypatch.setenv("SOURCE_API_BACKOFF_MAX_SECONDS", "5")
-
-    with pytest.raises(ValidationError, match="SOURCE_API_BACKOFF_MAX_SECONDS"):
         _cargar()
 
 

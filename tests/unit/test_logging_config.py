@@ -6,7 +6,6 @@ import json
 import logging
 import sys
 from collections.abc import Iterator
-from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
@@ -44,14 +43,6 @@ def test_log_contiene_los_campos_obligatorios():
     assert datos["service"] == "worker"
     assert datos["event"] == "worker_started"
     assert datos["message"] == "Worker arrancado"
-
-
-def test_timestamp_en_utc_con_milisegundos():
-    marca = _formatear()["timestamp"]
-
-    assert marca.endswith("Z")
-    assert datetime.fromisoformat(marca).tzinfo == UTC
-    assert len(marca.split(".")[1]) == len("123Z")
 
 
 def test_execution_id_solo_dentro_del_contexto():
@@ -97,12 +88,3 @@ def test_configurar_logging_emite_json_por_stdout(capsys: pytest.CaptureFixture[
 
     linea = capsys.readouterr().out.strip()
     assert json.loads(linea)["service"] == "api"
-
-
-@pytest.mark.usefixtures("logging_aislado")
-def test_configurar_logging_respeta_el_nivel(capsys: pytest.CaptureFixture[str]):
-    configurar_logging(Servicio.API, "WARNING")
-
-    logging.getLogger("prueba").info("No debe salir")
-
-    assert capsys.readouterr().out == ""

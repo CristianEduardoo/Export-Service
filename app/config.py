@@ -19,6 +19,8 @@ from pydantic import AwareDatetime, Field, HttpUrl, SecretStr, field_validator, 
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 from sqlalchemy import URL
 
+from app.constants import MAX_REGISTROS_POR_PAGINA
+
 # Comprobación sencilla de formato; la entrega real la decide el servidor SMTP.
 _PATRON_EMAIL: Final[re.Pattern[str]] = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -51,7 +53,9 @@ class Settings(BaseSettings):
     api_origen_url: HttpUrl = Field(alias="SOURCE_API_URL")
     api_origen_timeout_segundos: float = Field(default=10, gt=0, alias="SOURCE_API_TIMEOUT_SECONDS")
     # El contrato de la API admite como máximo 500 registros por página.
-    api_origen_registros_por_pagina: int = Field(default=100, ge=1, le=500, alias="SOURCE_API_PAGE_SIZE")
+    api_origen_registros_por_pagina: int = Field(
+        default=100, ge=1, le=MAX_REGISTROS_POR_PAGINA, alias="SOURCE_API_PAGE_SIZE"
+    )
     api_origen_max_paginas: int = Field(default=1000, ge=1, alias="SOURCE_API_MAX_PAGES")
     api_origen_max_reintentos: int = Field(default=3, ge=0, alias="SOURCE_API_MAX_RETRIES")
     api_origen_backoff_base_segundos: float = Field(default=1, gt=0, alias="SOURCE_API_BACKOFF_BASE_SECONDS")
