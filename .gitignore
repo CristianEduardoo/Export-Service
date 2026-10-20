@@ -17,3 +17,9 @@ exports/
 
 # Material interno de evaluación; no publicar con el reto
 grading/
+
+# Entorno local de desarrollo
+# Entorno virtual (el original solo ignora .venv/)
+venv/
+# Datos locales generados en ejecución
+data/
