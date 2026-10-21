@@ -282,14 +282,18 @@ class ExportacionService:
         ahora = self._reloj()
         self._marcar_fallida(ejecucion, codigo, str(error), ahora)
         self._db.commit()
+        # El stack trace solo aporta en lo inesperado; en un fallo previsto y clasificado
+        # (API caída, SMTP rechazado...) basta con el tipo y el mensaje.
+        inesperado = codigo is CodigoError.ERROR_INESPERADO
         logger.error(
             "Ejecución fallida",
-            exc_info=error,
+            exc_info=error if inesperado else None,
             extra={
                 "event": Evento.EJECUCION_FALLIDA,
                 "error_code": codigo,
                 "step": ejecucion.paso,
                 "duration_ms": _duracion_ms(ejecucion.iniciada_en, ahora),
+                **({} if inesperado else {"error": {"type": type(error).__name__, "message": str(error)}}),
             },
         )
 

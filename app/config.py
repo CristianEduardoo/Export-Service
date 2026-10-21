@@ -9,7 +9,6 @@ romperse a mitad de una ejecución.
 from __future__ import annotations
 
 import re
-from datetime import UTC
 from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
@@ -20,6 +19,7 @@ from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 from sqlalchemy import URL
 
 from app.constants import MAX_REGISTROS_POR_PAGINA
+from app.domain.fechas import a_utc
 
 # Comprobación sencilla de formato; la entrega real la decide el servidor SMTP.
 _PATRON_EMAIL: Final[re.Pattern[str]] = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -99,7 +99,7 @@ class Settings(BaseSettings):
     @classmethod
     def _convertir_a_utc(cls, valor: AwareDatetime) -> AwareDatetime:
         """Dentro del sistema todas las fechas van en UTC."""
-        return valor.astimezone(UTC)
+        return a_utc(valor)
 
     @field_validator("exportacion_destinatarios", mode="before")
     @classmethod

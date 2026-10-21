@@ -94,6 +94,9 @@ disallow_untyped_defs = false
 testpaths = ["tests"]
 addopts = "-q --strict-markers"
 markers = ["integration: necesita PostgreSQL real (docker compose)"]
+# Starlette depreca usar httpx en su TestClient (solo afecta a los tests). Pendiente en
+# "mejoras": migrar cuando FastAPI publique el cliente de pruebas que lo sustituye.
+filterwarnings = ["ignore:Using `httpx` with `starlette.testclient` is deprecated"]
 
 [tool.coverage.run]
 source = ["app"]

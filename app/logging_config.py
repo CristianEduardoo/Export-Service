@@ -16,13 +16,15 @@ from datetime import UTC, datetime
 from typing import Any, Final
 
 from app.constants import Servicio
+from app.domain.fechas import fecha_iso_utc
 
 _execution_id_actual: ContextVar[str | None] = ContextVar("execution_id", default=None)
 
 # Atributos que todo LogRecord trae de serie; el resto son campos extra del usuario.
+# color_message lo añade uvicorn con códigos de color de terminal: en un log JSON es ruido.
 _ATRIBUTOS_ESTANDAR: Final[frozenset[str]] = frozenset(
     logging.LogRecord("", logging.INFO, "", 0, "", None, None).__dict__,
-) | {"message", "asctime"}
+) | {"message", "asctime", "color_message"}
 
 # Librerías que configuran sus propios handlers; se redirigen a nuestro formato.
 _LOGGERS_EXTERNOS: Final[tuple[str, ...]] = ("uvicorn", "uvicorn.error", "uvicorn.access")
@@ -70,8 +72,7 @@ class FormateadorJson(logging.Formatter):
                 "message": str(error),
                 "stack_trace": self.formatException(record.exc_info),
             }
-        # default=str: fechas, Decimal o UUID se escriben como texto en lugar de romper el log.
-        return json.dumps(datos, default=str, ensure_ascii=False)
+        return json.dumps(datos, default=_serializar, ensure_ascii=False)
 
 
 def configurar_logging(servicio: Servicio, nivel: str) -> None:
@@ -93,6 +94,16 @@ def configurar_logging(servicio: Servicio, nivel: str) -> None:
 
     for nombre in _LOGGERS_RUIDOSOS:
         logging.getLogger(nombre).setLevel(logging.WARNING)
+
+
+def _serializar(valor: object) -> str:
+    """Valores que JSON no conoce: fechas en ISO con Z; el resto (Decimal, UUID...) como texto.
+
+    Nunca lanza: un log que falla justo cuando hay un error es lo peor que puede pasar.
+    """
+    if isinstance(valor, datetime) and valor.tzinfo is not None:
+        return fecha_iso_utc(valor)
+    return str(valor)
 
 
 def _formatear_timestamp(marca: float) -> str:

@@ -8,10 +8,16 @@ from contextlib import contextmanager
 from sqlalchemy import URL, Engine, create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.constants import TIMEOUT_CONEXION_BD_SEGUNDOS
+
 
 def crear_motor(url: URL | str) -> Engine:
-    """Motor con pool de conexiones. pool_pre_ping descarta conexiones caídas antes de usarlas."""
-    return create_engine(url, pool_pre_ping=True)
+    """Motor con pool de conexiones.
+
+    pool_pre_ping descarta conexiones caídas antes de usarlas y connect_timeout
+    evita quedarse esperando indefinidamente si PostgreSQL no responde.
+    """
+    return create_engine(url, pool_pre_ping=True, connect_args={"connect_timeout": TIMEOUT_CONEXION_BD_SEGUNDOS})
 
 
 def crear_fabrica_sesiones(motor: Engine) -> sessionmaker[Session]:

@@ -2,12 +2,20 @@
 
 from __future__ import annotations
 
+import logging
+
 from alembic import context
 from sqlalchemy import create_engine, pool
 
+from app.constants import Servicio
 from app.db.models import Base
+from app.logging_config import configurar_logging
 
 configuracion = context.config
+
+# Sin esto Alembic no muestra nada. Si ya hay handlers (pytest), se respetan.
+if not logging.getLogger().handlers:
+    configurar_logging(Servicio.MIGRACIONES, "INFO")
 metadatos = Base.metadata
 
 

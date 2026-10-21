@@ -22,13 +22,13 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Annotated
 
 from pydantic import AfterValidator, AwareDatetime, BaseModel, BeforeValidator, ConfigDict, Field, ValidationError
 
 from app.constants import MAX_REGISTROS_POR_PAGINA, PATRON_MONEDA
+from app.domain.fechas import a_utc
 
 
 class ContratoOrigenInvalidoError(Exception):
@@ -50,14 +50,9 @@ def _exigir_texto(valor: object) -> object:
     return valor
 
 
-def _convertir_a_utc(valor: datetime) -> datetime:
-    """Dentro del sistema todas las fechas van en UTC."""
-    return valor.astimezone(UTC)
-
-
 # Tipos reutilizables que respetan el tipo JSON del contrato antes de convertir.
 ImporteJson = Annotated[Decimal, BeforeValidator(_exigir_numero)]
-FechaJson = Annotated[AwareDatetime, BeforeValidator(_exigir_texto), AfterValidator(_convertir_a_utc)]
+FechaJson = Annotated[AwareDatetime, BeforeValidator(_exigir_texto), AfterValidator(a_utc)]
 
 
 class PedidoOrigen(BaseModel):

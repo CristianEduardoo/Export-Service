@@ -6,6 +6,7 @@ import json
 import logging
 import sys
 from collections.abc import Iterator
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any
 
@@ -60,10 +61,17 @@ def test_execution_id_se_limpia_aunque_haya_un_error():
 
 
 def test_campos_extra_incluidos_y_no_serializables_como_texto():
-    datos = _formatear(records_read=5, amount=Decimal("129.95"))
+    datos = _formatear(
+        records_read=5,
+        amount=Decimal("129.95"),
+        updated_since=datetime(2026, 10, 1, 2, 0, tzinfo=timezone(timedelta(hours=2))),
+        color_message="\u001b[36mruido de uvicorn\u001b[0m",
+    )
 
     assert datos["records_read"] == 5
     assert datos["amount"] == "129.95"
+    assert datos["updated_since"] == "2026-10-01T00:00:00Z"
+    assert "color_message" not in datos
 
 
 def test_excepcion_incluye_tipo_mensaje_y_stack_trace():

@@ -11,6 +11,7 @@ class Servicio(StrEnum):
 
     API = "api"
     WORKER = "worker"
+    MIGRACIONES = "migrations"
 
 
 class Evento(StrEnum):
@@ -29,6 +30,11 @@ class Evento(StrEnum):
     EMAIL_ENVIADO = "email_sent"
     EMAIL_INCIERTO = "email_delivery_unknown"
     RESERVA_PERDIDA = "lease_lost"
+    EJECUCION_RECHAZADA = "execution_rejected"
+    API_ARRANCADA = "api_started"
+    WORKER_ARRANCADO = "worker_started"
+    WORKER_DETENIDO = "worker_stopped"
+    ERROR_WORKER = "worker_iteration_failed"
 
 
 class EstadoEjecucion(StrEnum):
@@ -104,6 +110,16 @@ PREFIJO_FICHERO: Final[str] = "export"
 EXTENSION_FICHERO: Final[str] = ".csv"
 FORMATO_FECHA_FICHERO: Final[str] = "%Y%m%dT%H%M%SZ"
 CODIFICACION_FICHERO: Final[str] = "utf-8"
+
+# API: paginación del listado de ejecuciones.
+LIMITE_LISTADO_POR_DEFECTO: Final[int] = 20
+LIMITE_LISTADO_MAXIMO: Final[int] = 100
+
+# Base de datos: sin este límite, un host inaccesible bloquearía el health check de readiness.
+TIMEOUT_CONEXION_BD_SEGUNDOS: Final[int] = 5
+
+# Worker: fichero que el bucle actualiza en cada vuelta (lo consulta el health check del contenedor).
+NOMBRE_FICHERO_LATIDO: Final[str] = "export-service-worker.heartbeat"
 
 # Email de la exportación. El Message-ID es determinista: <execution_id@export-service>.
 DOMINIO_MESSAGE_ID: Final[str] = "export-service"
