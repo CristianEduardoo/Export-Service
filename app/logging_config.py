@@ -27,6 +27,10 @@ _ATRIBUTOS_ESTANDAR: Final[frozenset[str]] = frozenset(
 # Librerías que configuran sus propios handlers; se redirigen a nuestro formato.
 _LOGGERS_EXTERNOS: Final[tuple[str, ...]] = ("uvicorn", "uvicorn.error", "uvicorn.access")
 
+# Librerías que registran cada petición HTTP: duplican nuestro evento source_page_fetched
+# (que ya incluye página, pedidos y duración), así que solo se dejan sus avisos y errores.
+_LOGGERS_RUIDOSOS: Final[tuple[str, ...]] = ("httpx", "httpcore")
+
 
 @contextmanager
 def contexto_ejecucion(execution_id: str) -> Iterator[None]:
@@ -86,6 +90,9 @@ def configurar_logging(servicio: Servicio, nivel: str) -> None:
         externo = logging.getLogger(nombre)
         externo.handlers.clear()
         externo.propagate = True
+
+    for nombre in _LOGGERS_RUIDOSOS:
+        logging.getLogger(nombre).setLevel(logging.WARNING)
 
 
 def _formatear_timestamp(marca: float) -> str:

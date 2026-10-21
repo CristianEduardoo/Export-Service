@@ -13,6 +13,15 @@ class Servicio(StrEnum):
     WORKER = "worker"
 
 
+class Evento(StrEnum):
+    """Nombre estable de cada evento de log (campo "event"), apto para filtrar y alertar."""
+
+    PAGINA_ORIGEN_OBTENIDA = "source_page_fetched"
+    REINTENTO_API_ORIGEN = "source_api_retry"
+    REINTENTO_SMTP = "smtp_retry"
+    FICHERO_GUARDADO = "file_saved"
+
+
 class EstadoEjecucion(StrEnum):
     """Estado público de una ejecución (contrato de la API)."""
 
@@ -71,6 +80,8 @@ class EscenarioOrigen(StrEnum):
 
 
 # Contrato de la API de origen (contracts/source-order*.json).
+RUTA_PEDIDOS: Final[str] = "/v1/orders"
+CABECERA_RETRY_AFTER: Final[str] = "Retry-After"
 MAX_REGISTROS_POR_PAGINA: Final[int] = 500
 PATRON_MONEDA: Final[str] = r"^[A-Z]{3}$"
 
@@ -84,6 +95,16 @@ PREFIJO_FICHERO: Final[str] = "export"
 EXTENSION_FICHERO: Final[str] = ".csv"
 FORMATO_FECHA_FICHERO: Final[str] = "%Y%m%dT%H%M%SZ"
 CODIFICACION_FICHERO: Final[str] = "utf-8"
+
+# Email de la exportación. El Message-ID es determinista: <execution_id@export-service>.
+DOMINIO_MESSAGE_ID: Final[str] = "export-service"
+ASUNTO_EMAIL: Final[str] = "Exportación de pedidos: {nombre}"
+CUERPO_EMAIL: Final[str] = (
+    "Se adjunta el fichero {nombre} con {filas} pedidos.\n\nEjecución: {execution_id}\nSHA-256: {sha256}\n"
+)
+# Backoff de los reintentos SMTP (el número de reintentos sí es configurable: SMTP_MAX_RETRIES).
+BACKOFF_SMTP_BASE_SEGUNDOS: Final[float] = 1.0
+BACKOFF_SMTP_MAX_SEGUNDOS: Final[float] = 10.0
 
 # Columnas del fichero de exportación, en el orden de contracts/export-record.example.json.
 COLUMNAS_EXPORTACION: Final[tuple[str, ...]] = (

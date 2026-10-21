@@ -31,6 +31,7 @@ from app.constants import (
     FORMATO_FECHA_FICHERO,
     PREFIJO_FICHERO,
 )
+from app.domain.fechas import fecha_iso_utc
 from app.domain.pedidos import PedidoOrigen
 
 
@@ -137,12 +138,7 @@ def _escribir_csv(filas: Iterable[FilaExportacion]) -> bytes:
                 # Formato "f": nunca notación científica (1E+2 se escribe 100).
                 format(fila.amount, "f"),
                 fila.currency,
-                _fecha_iso_utc(fila.updated_at),
+                fecha_iso_utc(fila.updated_at),
             ],
         )
     return buffer.getvalue().encode(CODIFICACION_FICHERO)
-
-
-def _fecha_iso_utc(fecha: datetime) -> str:
-    """2026-10-16T07:45:00Z: el mismo formato que usa el contrato."""
-    return fecha.astimezone(UTC).isoformat().replace("+00:00", "Z")
