@@ -15,11 +15,11 @@ from collections.abc import Sequence
 from datetime import datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import func, select, update
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.constants import ESTADOS_ACTIVOS, EscenarioOrigen, EstadoEjecucion, OrigenEjecucion
+from app.constants import ESTADOS_ACTIVOS, CodigoError, EscenarioOrigen, EstadoEjecucion, OrigenEjecucion
 from app.db.models import Ejecucion
 
 
@@ -42,8 +42,12 @@ class EjecucionRepository:
         origen: OrigenEjecucion,
         ahora: datetime,
         escenario: EscenarioOrigen | None = None,
+        desde: datetime | None = None,
     ) -> Ejecucion:
         """Crea una ejecución pendiente.
+
+        desde: fecha explícita desde la que exportar (reproceso). Si es None, el
+        worker usará la marca de agua.
 
         Lanza EjecucionActivaExistenteError si ya hay una activa. Se usa un
         savepoint para que el error no invalide el resto de la transacción.
@@ -52,6 +56,7 @@ class EjecucionRepository:
             estado=EstadoEjecucion.PENDIENTE,
             origen=origen,
             escenario=escenario,
+            desde=desde,
             creada_en=ahora,
         )
         try:
@@ -126,6 +131,16 @@ class EjecucionRepository:
         return self._db.scalars(sentencia).all()
 
     def obtener_marca_de_agua(self) -> datetime | None:
-        """updated_at más reciente exportado por una ejecución completada."""
-        sentencia = select(func.max(Ejecucion.marca_agua)).where(Ejecucion.estado == EstadoEjecucion.COMPLETADA)
+        """updated_at más reciente exportado.
+
+        Cuentan las ejecuciones completadas y también las de envío incierto: con
+        la política "como mucho una vez" no se vuelven a exportar esos pedidos
+        (se resuelven revisando el caso y, si hace falta, con un reproceso).
+        """
+        sentencia = select(func.max(Ejecucion.marca_agua)).where(
+            or_(
+                Ejecucion.estado == EstadoEjecucion.COMPLETADA,
+                Ejecucion.codigo_error == CodigoError.ENVIO_EMAIL_INCIERTO,
+            ),
+        )
         return self._db.scalar(sentencia)

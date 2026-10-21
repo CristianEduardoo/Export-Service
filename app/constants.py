@@ -20,6 +20,15 @@ class Evento(StrEnum):
     REINTENTO_API_ORIGEN = "source_api_retry"
     REINTENTO_SMTP = "smtp_retry"
     FICHERO_GUARDADO = "file_saved"
+    EJECUCION_CREADA = "execution_created"
+    EJECUCION_INICIADA = "execution_started"
+    EJECUCION_COMPLETADA = "execution_completed"
+    EJECUCION_FALLIDA = "execution_failed"
+    EJECUCION_RECUPERADA = "execution_recovered"
+    PEDIDO_INVALIDO = "record_invalid"
+    EMAIL_ENVIADO = "email_sent"
+    EMAIL_INCIERTO = "email_delivery_unknown"
+    RESERVA_PERDIDA = "lease_lost"
 
 
 class EstadoEjecucion(StrEnum):

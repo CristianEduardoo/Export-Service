@@ -12,29 +12,16 @@ esos casos están cubiertos en test_pedidos.py.
 from __future__ import annotations
 
 import json
-from collections.abc import Iterator
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
-from typing import Any
 from uuid import UUID
 
 from app.domain.exportacion import generar_fichero, preparar_exportacion
 from app.domain.pedidos import PedidoInvalido, PedidoOrigen, validar_pedidos, validar_respuesta
+from tests.factories import sobres
 
 FICHERO_CASUISTICAS = Path(__file__).parents[2] / "fixtures" / "source_orders_casuisticas.json"
-
-
-def _paginas(items: list[Any], tamano: int) -> Iterator[dict[str, Any]]:
-    """Trocea los pedidos en páginas con el mismo sobre que devuelve la API mock."""
-    for inicio in range(0, len(items), tamano):
-        yield {
-            "items": items[inicio : inicio + tamano],
-            "page": inicio // tamano + 1,
-            "page_size": tamano,
-            "total": len(items),
-            "has_next": inicio + tamano < len(items),
-        }
 
 
 def test_flujo_completo_del_dominio_con_las_casuisticas():
@@ -43,7 +30,7 @@ def test_flujo_completo_del_dominio_con_las_casuisticas():
     validos: list[PedidoOrigen] = []
     invalidos: list[PedidoInvalido] = []
 
-    for pagina in _paginas(items, tamano=5):
+    for pagina in sobres(items, tamano=5):
         resultado = validar_pedidos(validar_respuesta(pagina).items)
         validos.extend(resultado.validos)
         invalidos.extend(resultado.invalidos)

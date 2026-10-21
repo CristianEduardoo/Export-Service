@@ -11,7 +11,7 @@ from sqlalchemy import Engine, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.constants import EstadoEjecucion, OrigenEjecucion
+from app.constants import CodigoError, EstadoEjecucion, OrigenEjecucion
 from app.db.models import Base
 from app.db.repositories.ejecucion_repository import EjecucionActivaExistenteError, EjecucionRepository
 
@@ -114,15 +114,26 @@ def test_marca_de_agua_solo_de_ejecuciones_completadas(db: Session):
     _finalizar(db, repositorio, marca_agua=datetime(2026, 10, 16, 9, 0, tzinfo=UTC))
     fallida = repositorio.crear(OrigenEjecucion.MANUAL, AHORA)
     fallida.estado = EstadoEjecucion.FALLIDA
+    fallida.codigo_error = CodigoError.ENVIO_EMAIL_FALLIDO
     fallida.marca_agua = datetime(2026, 10, 17, tzinfo=UTC)
     db.commit()
 
+    # Un envío fallido no avanza la marca: esos pedidos se vuelven a exportar.
     assert repositorio.obtener_marca_de_agua() == datetime(2026, 10, 16, 9, 0, tzinfo=UTC)
+
+    incierta = repositorio.crear(OrigenEjecucion.MANUAL, AHORA)
+    incierta.estado = EstadoEjecucion.FALLIDA
+    incierta.codigo_error = CodigoError.ENVIO_EMAIL_INCIERTO
+    incierta.marca_agua = datetime(2026, 10, 18, tzinfo=UTC)
+    db.commit()
+
+    # Un envío incierto sí la avanza: como mucho una vez, sin duplicados.
+    assert repositorio.obtener_marca_de_agua() == datetime(2026, 10, 18, tzinfo=UTC)
 
 
 def test_la_base_de_datos_rechaza_un_estado_desconocido(db: Session):
     """Defensa en profundidad: la restricción CHECK protege aunque se salte el código."""
-    with pytest.raises(IntegrityError, match="ck_ejecuciones_estado"):
+    with pytest.raises(IntegrityError, match='constraint "ck_ejecuciones_estado"'):
         db.execute(
             text(
                 "INSERT INTO ejecuciones (id, estado, origen, creada_en, registros_leidos, registros_exportados, "
