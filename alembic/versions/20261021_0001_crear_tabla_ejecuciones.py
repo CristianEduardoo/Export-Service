@@ -3,6 +3,12 @@
 Revision ID: 0001
 Revises:
 Create Date: 2026-10-21
+
+Una migración es una foto fija: no importa constantes de la aplicación, porque
+si mañana cambian, esta migración debe seguir creando exactamente lo mismo.
+
+op.f(): el nombre ya es el definitivo. Sin él, Alembic le aplicaría la convención
+de nombres del modelo y quedaría duplicado (ck_ejecuciones_ck_ejecuciones_...).
 """
 
 from __future__ import annotations
@@ -44,18 +50,18 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id", name="pk_ejecuciones"),
         sa.CheckConstraint(
             "estado IN ('pending', 'running', 'completed', 'failed')",
-            name="ck_ejecuciones_estado",
+            name=op.f("ck_ejecuciones_estado"),
         ),
         sa.CheckConstraint(
             "paso IN ('fetching_source', 'writing_file', 'sending_email', 'email_sent')",
-            name="ck_ejecuciones_paso",
+            name=op.f("ck_ejecuciones_paso"),
         ),
-        sa.CheckConstraint("origen IN ('manual', 'scheduled')", name="ck_ejecuciones_origen"),
-        sa.CheckConstraint("escenario IN ('temporary_error', 'slow')", name="ck_ejecuciones_escenario"),
+        sa.CheckConstraint("origen IN ('manual', 'scheduled')", name=op.f("ck_ejecuciones_origen")),
+        sa.CheckConstraint("escenario IN ('temporary_error', 'slow')", name=op.f("ck_ejecuciones_escenario")),
         sa.CheckConstraint(
             "codigo_error IN ('source_unavailable', 'source_contract_violation', 'email_send_failed', "
             "'email_delivery_unknown', 'worker_lost', 'unexpected_error')",
-            name="ck_ejecuciones_codigo_error",
+            name=op.f("ck_ejecuciones_codigo_error"),
         ),
     )
     op.create_index("ix_ejecuciones_creada_en", "ejecuciones", ["creada_en"])
