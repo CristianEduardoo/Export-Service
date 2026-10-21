@@ -2,9 +2,12 @@
 
 Uso:
     python -m app.worker            Proceso continuo (servicio "worker" del compose).
-    python -m app.worker --once     Crea una ejecución programada, la procesa y termina.
+    python -m app.worker --enqueue  Solo registra una ejecución programada y termina: el worker
+                                    en bucle la procesa. Es lo que ejecuta Ofelia (job-exec), así
+                                    el scheduler no contiene lógica de negocio.
+    python -m app.worker --once     Registra una ejecución programada, la procesa y termina.
                                     Para schedulers que lanzan un contenedor por ejecución
-                                    (Ofelia job-run, Azure Container Apps Jobs).
+                                    (Azure Container Apps Jobs, Ofelia job-run).
     python -m app.worker --health   Health check del contenedor: ¿sigue latiendo el bucle?
 
 En cada vuelta del bucle: recupera ejecuciones abandonadas, procesa la siguiente
@@ -97,16 +100,20 @@ class Worker:
                 self._parada.wait(self._settings.worker_intervalo_sondeo_segundos)
         logger.info("Worker detenido", extra={"event": Evento.WORKER_DETENIDO, "worker_id": self.id})
 
-    def una_vez(self) -> None:
-        """Crea una ejecución programada y la procesa. Si ya hay una activa, procesa la pendiente si la hay."""
+    def programar(self) -> None:
+        """Registra una ejecución programada. Si ya hay una activa no hace nada (no es un error)."""
         with self._fabrica() as db:
             try:
                 EjecucionesService(db).crear(OrigenEjecucion.PROGRAMADA)
             except EjecucionActivaExistenteError as error:
                 logger.warning(
-                    "Ya hay una ejecución activa: no se crea otra",
+                    "Ya hay una ejecución activa: no se programa otra",
                     extra={"event": Evento.EJECUCION_RECHAZADA, "active_execution_id": error.ejecucion_activa_id},
                 )
+
+    def una_vez(self) -> None:
+        """Registra una ejecución programada y la procesa (o procesa la pendiente que ya hubiera)."""
+        self.programar()
         self.iteracion()
 
 
@@ -126,7 +133,8 @@ def latido_reciente(maximo_segundos: float) -> bool:
 def main(argumentos: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.worker", description="Worker de la exportación de pedidos")
     modo = parser.add_mutually_exclusive_group()
-    modo.add_argument("--once", action="store_true", help="crea una ejecución, la procesa y termina")
+    modo.add_argument("--enqueue", action="store_true", help="registra una ejecución programada y termina")
+    modo.add_argument("--once", action="store_true", help="registra una ejecución, la procesa y termina")
     modo.add_argument("--health", action="store_true", help="comprueba que el bucle sigue latiendo")
     opciones = parser.parse_args(argumentos)
 
@@ -146,7 +154,9 @@ def main(argumentos: Sequence[str] | None = None) -> int:
                 ClienteSmtp(settings),
                 AlmacenFicherosLocal(settings.exportacion_directorio),
             )
-            if opciones.once:
+            if opciones.enqueue:
+                worker.programar()
+            elif opciones.once:
                 worker.una_vez()
             else:
                 signal.signal(signal.SIGTERM, worker.detener)

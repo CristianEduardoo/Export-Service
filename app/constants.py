@@ -131,6 +131,10 @@ CUERPO_EMAIL: Final[str] = (
 BACKOFF_SMTP_BASE_SEGUNDOS: Final[float] = 1.0
 BACKOFF_SMTP_MAX_SEGUNDOS: Final[float] = 10.0
 
+# Permisos del fichero exportado: dueño lee y escribe, grupo lee, resto nada. Explícitos porque
+# tempfile.mkstemp crea con 600 y el fichero final los heredaría (nadie más podría recogerlo).
+PERMISOS_FICHERO_EXPORTADO: Final[int] = 0o640
+
 # Columnas del fichero de exportación, en el orden de contracts/export-record.example.json.
 COLUMNAS_EXPORTACION: Final[tuple[str, ...]] = (
     "order_id",

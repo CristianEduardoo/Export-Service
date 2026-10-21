@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import stat
 from pathlib import Path
 
 import pytest
@@ -19,6 +20,8 @@ def test_guarda_el_contenido_completo_sin_dejar_temporales(tmp_path: Path):
 
     assert destino.read_bytes() == b"order_id\r\nord-1\r\n"
     assert [ruta.name for ruta in destino.parent.iterdir()] == [destino.name]
+    # Sin chmod explícito heredaría el 600 del temporal y nadie más podría recogerlo.
+    assert stat.S_IMODE(destino.stat().st_mode) == 0o640
 
 
 @pytest.mark.parametrize("nombre", ["../fuera.csv", "subcarpeta/export.csv"])

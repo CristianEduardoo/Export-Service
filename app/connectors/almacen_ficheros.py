@@ -12,7 +12,7 @@ import os
 import tempfile
 from pathlib import Path
 
-from app.constants import Evento
+from app.constants import PERMISOS_FICHERO_EXPORTADO, Evento
 from app.domain.exportacion import FicheroExportacion
 
 logger = logging.getLogger(__name__)
@@ -42,6 +42,7 @@ class AlmacenFicherosLocal:
                 temporal.write(fichero.contenido)
                 temporal.flush()
                 os.fsync(temporal.fileno())
+            os.chmod(ruta_temporal, PERMISOS_FICHERO_EXPORTADO)
             os.replace(ruta_temporal, destino)
         except BaseException:
             # Si algo falla (disco lleno, interrupción...), no se deja el temporal abandonado.

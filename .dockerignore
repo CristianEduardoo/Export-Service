@@ -1,0 +1,22 @@
+# Solo entra en la imagen lo necesario para construir y ejecutar.
+.git
+.github
+venv
+.venv
+data
+tests
+examples
+starter
+docs
+contracts
+**/__pycache__
+**/*.py[cod]
+*.egg-info
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+htmlcov
+# Nunca secretos en la imagen
+.env
+.env.*

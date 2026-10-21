@@ -1,0 +1,118 @@
+# Entorno completo: docker compose up --build
+#
+#   API ............ http://localhost:8000/docs
+#   Mailpit (email)  http://localhost:8025
+#   API de origen .. http://localhost:8090/docs
+#
+# Requisito: cp .env.example .env
+
+name: export-service
+
+# Configuración común de los procesos que usan nuestra imagen.
+x-app: &app
+  build:
+    context: .
+    args:
+      VERSION: ${IMAGE_TAG:-local}
+  image: export-service:${IMAGE_TAG:-local}
+  env_file: .env
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: postgres:17.11
+    env_file: .env
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # Aplica las migraciones y termina. API y worker no arrancan hasta que acabe bien.
+  migrate:
+    <<: *app
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    <<: *app
+    ports:
+      - "8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    <<: *app
+    command: ["python", "-m", "app.worker"]
+    volumes:
+      - exports:/app/exports
+    healthcheck:
+      test: ["CMD", "python", "-m", "app.worker", "--health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    # Ante docker stop, deja terminar la ejecución en curso antes de matar el proceso.
+    stop_grace_period: 60s
+    labels:
+      # Ofelia ejecuta este comando dentro de este contenedor con la frecuencia de SCHEDULE.
+      # El comando solo registra la ejecución: la lógica de negocio sigue en el worker.
+      ofelia.enabled: "true"
+      ofelia.job-exec.exportacion-programada.schedule: "${SCHEDULE:-@every 5m}"
+      ofelia.job-exec.exportacion-programada.command: "python -m app.worker --enqueue"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      source-api:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+
+  # Scheduler. Versión fijada (nunca latest). Necesita el socket de Docker para
+  # ejecutar comandos en el worker, y eso equivale a ser root en el host. El ":ro"
+  # NO lo limita: solo protege el fichero del socket, no la API de Docker que hay
+  # detrás. Aceptable en local; en producción se sustituye por un scheduler
+  # gestionado (ver README: Azure Container Apps Jobs).
+  scheduler:
+    image: mcuadros/ofelia:0.3.22
+    command: ["daemon", "--docker"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      worker:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # API de origen de examples/ con nuestros datos de casuísticas (los mismos de los tests).
+  source-api:
+    build: ./examples/source-api
+    volumes:
+      - ./tests/fixtures/source_orders_casuisticas.json:/app/data.json:ro
+    ports:
+      - "8090:8090"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8090/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    ports:
+      - "8025:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:
+  exports:
