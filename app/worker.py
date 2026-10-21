@@ -5,9 +5,6 @@ Uso:
     python -m app.worker --enqueue  Solo registra una ejecución programada y termina: el worker
                                     en bucle la procesa. Es lo que ejecuta Ofelia (job-exec), así
                                     el scheduler no contiene lógica de negocio.
-    python -m app.worker --once     Registra una ejecución programada, la procesa y termina.
-                                    Para schedulers que lanzan un contenedor por ejecución
-                                    (Azure Container Apps Jobs, Ofelia job-run).
     python -m app.worker --health   Health check del contenedor: ¿sigue latiendo el bucle?
 
 En cada vuelta del bucle: recupera ejecuciones abandonadas, procesa la siguiente
@@ -111,11 +108,6 @@ class Worker:
                     extra={"event": Evento.EJECUCION_RECHAZADA, "active_execution_id": error.ejecucion_activa_id},
                 )
 
-    def una_vez(self) -> None:
-        """Registra una ejecución programada y la procesa (o procesa la pendiente que ya hubiera)."""
-        self.programar()
-        self.iteracion()
-
 
 def registrar_latido() -> None:
     """Actualiza la fecha del fichero de latido."""
@@ -134,7 +126,6 @@ def main(argumentos: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.worker", description="Worker de la exportación de pedidos")
     modo = parser.add_mutually_exclusive_group()
     modo.add_argument("--enqueue", action="store_true", help="registra una ejecución programada y termina")
-    modo.add_argument("--once", action="store_true", help="registra una ejecución, la procesa y termina")
     modo.add_argument("--health", action="store_true", help="comprueba que el bucle sigue latiendo")
     opciones = parser.parse_args(argumentos)
 
@@ -156,8 +147,6 @@ def main(argumentos: Sequence[str] | None = None) -> int:
             )
             if opciones.enqueue:
                 worker.programar()
-            elif opciones.once:
-                worker.una_vez()
             else:
                 signal.signal(signal.SIGTERM, worker.detener)
                 signal.signal(signal.SIGINT, worker.detener)

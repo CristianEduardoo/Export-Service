@@ -9,12 +9,14 @@
 name: export-service
 
 # Configuración común de los procesos que usan nuestra imagen.
+# En local se construye (export-service:local). En el servidor, Jenkins fija IMAGE_REPO e
+# IMAGE_TAG en el .env y la imagen se descarga del registry con esa versión exacta.
 x-app: &app
   build:
     context: .
     args:
       VERSION: ${IMAGE_TAG:-local}
-  image: export-service:${IMAGE_TAG:-local}
+  image: ${IMAGE_REPO:-export-service}:${IMAGE_TAG:-local}
   env_file: .env
   restart: unless-stopped
 
