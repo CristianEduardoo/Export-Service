@@ -13,7 +13,7 @@ pipeline {
 
     environment {
         DOCKER_HUB_REPO = 'cristianeduardoo/export-service'
-        GITHUB_REPO = 'https://github.com/CristianEduardoo/backend-technical-challenge.git'
+        GITHUB_REPO = 'https://github.com/CristianEduardoo/Export-Service.git'
         BRANCH = 'main'
         // Usuario de despliegue sin privilegios (no root) y carpeta del proyecto en el servidor.
         SERVIDOR = 'deploy@mi-servidor'
